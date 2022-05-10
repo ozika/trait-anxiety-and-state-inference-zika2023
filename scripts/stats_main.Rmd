@@ -588,7 +588,7 @@ ggsave(here::here("output/figures/Fig_model_fit_and_anxiety.pdf"), width = 5, he
 #### Oddball/meaninful by anx and outcome
 ```{r}
 # Load calcualted model-free learning rates
-mflr_data <- read.csv(here::here("data/oddball_data_n5.csv"))
+mflr_data <- read.csv(here::here("data/oddball_data.csv"))
 mflr_data = assign_var_types(mflr_data, c("study", "lrtype", "ta","contingency", "ids" ))
 df <- melt(mflr_data, measure.vars=c("mflr_sh","mflr_nosh"),
     value.name = "mflr", variable.name="outcome_str")
