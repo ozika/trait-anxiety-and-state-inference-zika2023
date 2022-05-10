@@ -1,3 +1,4 @@
 output/
 renv/
 .RData
+.Rhistory
