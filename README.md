@@ -1,4 +1,4 @@
-## Description
+# Description
 
 This repo is associated with the following paper:
 
