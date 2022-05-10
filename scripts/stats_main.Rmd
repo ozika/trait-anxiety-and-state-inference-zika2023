@@ -21,6 +21,8 @@ here::here()
 
 renv::restore(project=here::here())
 #renv::snapshot()
+dir.create(here::here("output/figures/"))
+
 ```
 
 ## Load packages
