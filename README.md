@@ -39,5 +39,5 @@ git clone  git@github.com:ozika/state-inference-models-zika2022.git
 MATLAB code for models used in the main text is in a separate repo. Please visit [ozika/state-inference-models-zika2022](https://github.com/ozika/state-inference-models-zika2022) for instructions.
 
 # Licence
-Code: GNU GPLv3 (see LICENSE.md)
+Code: GNU GPLv3 (see LICENSE.md)  
 Data: CC BY-NC 4.0 International license [see here](https://creativecommons.org/licenses/by-nc/4.0/)
