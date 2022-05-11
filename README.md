@@ -17,8 +17,11 @@ The main analysis scripts are organised in a single `r-markdown` notebook. The c
 
 **Scripts tested on**
 
-Operating systems: `Ubuntu 18.04.6 LTS`,  `macOS Catalina 10.15.7`, `macOS Monterey 12.3.1`  
+Operating systems: `Ubuntu 18.04.6 LTS`,  `macOS Catalina 10.15.7`, `macOS Monterey 12.3.1`
 R versions: `3.6.0 (2019-04-26)`, `4.0.0 (2020-04-24)`, `4.1.2 (2021-11-01)`
+
+**Expected runtime**
+- less than 2 minutes on a normal computer
 
 **Instructions**
 1. Glone git repo (this will create a folder with all scripts and data called `trait-anxiety-and-state-inference-zika2022`)
