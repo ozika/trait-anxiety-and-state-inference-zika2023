@@ -16,9 +16,8 @@ The main analysis scripts are organised in a single `r-markdown` notebook. The c
 - set up SSH key with github.com (see [instructions here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account))
 
 **Scripts tested on**
-
-Operating systems: `Ubuntu 18.04.6 LTS`,  `macOS Catalina 10.15.7`, `macOS Monterey 12.3.1` :checkmark:
-R versions: `3.6.0 (2019-04-26)`, `4.0.0 (2020-04-24)`, `4.1.2 (2021-11-01)` :checkmark:
+Operating systems: `Ubuntu 18.04.6 LTS`,  `macOS Catalina 10.15.7`, `macOS Monterey 12.3.1`
+R versions: `3.6.0 (2019-04-26)`, `4.0.0 (2020-04-24)`, `4.1.2 (2021-11-01)`  
 
 **Instructions**
 1. Glone git repo (this will create a folder with all scripts and data called `trait-anxiety-and-state-inference-zika2022`)
