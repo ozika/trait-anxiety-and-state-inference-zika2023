@@ -1,0 +1,351 @@
+---
+title: "Trait Anxiety and State Inference: Extra analyses"
+author: "Ondrej Zika"
+date: "1/10/2021"
+output: html_document
+---
+
+## Preparatory steps
+- identify root folder
+- restore computational environment from $ROOT/renv.lock
+
+```{r setup, include=FALSE}
+options(warn=-1)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load("renv", "here", "knitr")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+here::i_am(".r_root_folder")
+here::here()
+
+renv::restore(project=here::here())
+#renv::snapshot()
+dir.create(here::here("output/figures/"))
+
+```
+
+## Load packages
+```{r}
+library(PupillometryR)
+required_packages = c("PupillometryR","ggplot2", "Jmisc", "sjmisc", "plyr", "lme4", "lmerTest", "emmeans", "tidyr", "dplyr", "ggpubr", "purrr", "broom",  "plotrix", "VGAM", "reshape2")
+pacman::p_load(char = required_packages)
+source(here::here("utils/r_functions.R"))
+```
+
+## Load additional tools
+```{r}
+# load color palettes
+pal <- get_colors("ond2")
+pal2 <- get_colors("ond")
+pal3 <- get_colors("ukr")
+
+plot(NULL, xlim=c(0,length(pal2)), ylim=c(0,1), 
+    xlab="", ylab="", xaxt="n", yaxt="n")
+rect(0:(length(pal)-1), 0.7, 1:length(pal), 0.9, col=pal)
+rect(0:(length(pal2)-1), 0.4, 1:length(pal2), 0.6, col=pal2)
+rect(0:(length(pal3)-1), 0.1, 1:length(pal3), 0.3, col=pal3)
+
+```
+
+## Out-of-sample parameters
+In these analyses, data are fitted to reversals 1-3 (i.e. first half) and the relative fits for 1-stat and n-state are tested against behavioral measures on reversals 4+
+The behavioural measures tested are: slopes and meaningful-oddball learning rates
+
+### Out-of-sample fit (1-3) and slopes (4+)
+```{r}
+data <-read.csv(here::here("data",  "data_across_mods.csv"))[,c("m1m3_diff_cv", "ids", "contingency")]
+dt  <- read.csv(here::here("data", "slope_estimates.csv")) 
+
+# Take only slopes for phases 4+
+slopedf <- dt[dt$half %in% "second",]
+slopedf = slopedf %>%
+  group_by(id, contingency) %>%
+  summarise_at(c("slope"), mean, na.rm = TRUE)
+slopedf$ids <- slopedf$id
+
+# merge slope estimates with fits to phases 1-3
+tdf <- base::merge(data, slopedf, by=c("ids", "contingency"))
+
+sdf = tdf %>%
+  group_by(ids) %>%
+  summarise_at(c("slope", "m1m3_diff_cv"), mean, na.rm = TRUE)
+
+g <- ggplot(data = sdf, aes(x = m1m3_diff_cv, y = slope, color=(slope) )) +
+geom_point( size = 3, alpha = 0.9, show.legend = FALSE) +
+geom_smooth(method='lm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
+theme_bw() +
+raincloud_theme +
+  stat_cor(method = "spearman",  alternative = "two.sided",  cor.coef.name = c("r"),  label.sep = ", ",  label.x.npc = "left",  label.y.npc = "top", digits = 3, r.digits = 3, p.digits = 3) +
+  labs(x= "Relative fit on first half (posiitve >> state inference)", y="Slopes on second half")
+g
+
+cor.test(sdf$slope, sdf$m1m3_diff_cv, method="spearman")
+
+```
+### Control analysis: Out-of-sample fit (1-3) and slopes (4+) using baseline regressed out
+```{r}
+data <-read.csv(here::here("data",  "data_across_mods.csv"))[,c("m1m3_diff_cv", "ids", "contingency")]
+dt  <- read.csv(here::here("data", "slope_estimates.csv")) 
+slopedf <- dt[dt$half %in% "second",]
+
+sdf<-read.csv(here::here("../output/full_behavioural_dataset_study_pX_real_data.csv"))
+# Only reversal cue
+sdf<-sdf[which(sdf$Trial_Type %in% 3),]
+sdf<-sdf[which(sdf$half %in% 2),]
+# Only trials just before reversal
+sdf<-sdf[which(sdf$trno_onlypre %in% c(seq(-5, -1))),]
+sdf<-sdf[which(sdf$rev_type_4plot %in% c("acq", "ext")),]
+fields <- c("contingency","id", "rev_type_4plot")
+sdf<- assign_var_types(sdf, fields)
+sdf$phase_str <- sdf$rev_type_4plot
+sdf = sdf %>%
+  group_by(id, study_str,contingency, phase_str) %>%
+  summarise_at("prob", mean, na.rm = TRUE)
+sdf$baseline <- sdf$prob
+baseline_df <- sdf
+baseline_df$baseline <- baseline_df$prob
+
+slopedf <- base::merge(slopedf, baseline_df, by=c("id", "contingency", "phase_str"))
+
+# regress our baseline
+m<- lmer(data = slopedf, slope ~ baseline + (1|phase_str/id) )
+slopedf$slope_regout <- resid(m)
+
+# Take only slopes for phases 4+
+
+slopedf = slopedf %>%
+  group_by(id, contingency) %>%
+  summarise_at(c("slope_regout"), mean, na.rm = TRUE)
+slopedf$ids <- slopedf$id
+
+# merge slope estimates with fits to phases 1-3
+tdf <- base::merge(data, slopedf, by=c("ids", "contingency"))
+
+sdf = tdf %>%
+  group_by(ids) %>%
+  summarise_at(c("slope_regout", "m1m3_diff_cv"), mean, na.rm = TRUE)
+
+g <- ggplot(data = sdf, aes(x = m1m3_diff_cv, y = slope_regout, color=(slope_regout) )) +
+geom_point( size = 3, alpha = 0.9, show.legend = FALSE) +
+geom_smooth(method='lm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
+theme_bw() +
+raincloud_theme +
+  stat_cor(method = "spearman",  alternative = "two.sided",  cor.coef.name = c("r"),  label.sep = ", ",  label.x.npc = "left",  label.y.npc = "top", digits = 3, r.digits = 3, p.digits = 3) +
+  labs(x= "Relative fit on first half (posiitve >> state inference)", y="Slopes on second half")
+g
+
+cor.test(sdf$slope_regout, sdf$m1m3_diff_cv, method="spearman")
+
+```
+
+### Out-of-sample fit (1-3) and meaningful-oddball learning rates (4+)
+```{r}
+
+library(MASS)
+
+
+
+### Get model fits to phases 1-3
+data <-read.csv(here::here("data",  "data_across_mods.csv"))[,c("m1m3_diff_cv", "ids", "contingency")]
+
+### Get oddball/meaningful learning rates for phases 4+
+dffull <- read.csv(here::here("data",  "oddball_data_n5_second.csv"))[,c("mflr_diff", "ids", "contingency")]
+
+### Merge
+df <- base::merge(data, dffull, by=c("ids", "contingency"))
+
+
+sdf = df %>%
+  group_by(ids) %>%
+  summarise_at(c("mflr_diff", "m1m3_diff_cv"), mean, na.rm = TRUE)
+
+
+
+
+
+
+
+g <- ggplot(data = sdf, aes(x = m1m3_diff_cv, y = mflr_diff, color=(mflr_diff) )) +
+geom_point( size = 3, alpha = 0.9, show.legend = FALSE) +
+geom_smooth(  method='rlm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
+#scale_color_gradient(low=col, high=col) +
+theme_bw() +
+raincloud_theme +
+  stat_cor(method = "spearman",  alternative = "two.sided",  cor.coef.name = c("r"),  label.sep = ", ",  label.x.npc = "left",  label.y.npc = "top", digits = 3, r.digits = 3, p.digits = 3) + 
+  ylim(-0.2, 0.3) + 
+  #xlim(-20, 39)
+  labs(x= "Relative fit on first half (posiitve >> state inference)", y="Meaningful-oddball on second half")
+g
+
+cor.test(sdf$mflr_diff, sdf$m1m3_diff_cv, method="spearman")
+```
+
+## Model fit consistency across sessions
+
+### Frequency of participants for each model/session
+```{r}
+data<-read.csv(here::here("data", "model_fit_final_full.csv"))
+data<-data[data$study==3,]
+data<-assign_var_types(data, c("contingency", "ta", "study", "ids"))  
+
+data %>%
+  group_by(contingency) %>%
+  summarise_at(c("m1_BIC", "m3_BIC"), mean, na.rm = TRUE)
+
+data["best_model"] <- apply(data[,c("m1_BIC", "m3_BIC")], 1, which.min)
+data$best_model <- mapvalues(data$best_model,
+                            from = c(1,2),
+                            to =c("1-state", "n-state"))
+data <- data[,c("contingency", "ta","ids", "best_model", "tabin")]
+library(tidyr)
+df <- data %>%
+  pivot_wider(names_from = "contingency", values_from = "best_model") %>%
+  na.omit()
+library(stringr)
+df$`60/40` <- str_replace(df$`60/40`, "-state", "")
+df$`75/25` <- str_replace(df$`75/25`, "-state", "")
+df$`90/10` <- str_replace(df$`90/10`, "-state", "")
+
+df <- df %>% 
+  unite("cond", `60/40`:`90/10`, remove=FALSE) %>%
+  unite("cond_firstlast", c("60/40","90/10"), remove=FALSE) %>%
+  unite("cond_secondlast", c("75/25","90/10"), remove=FALSE)
+
+ggplot(data.frame(df), aes(x=cond)) +
+  #geom_bar() +
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+          scale_y_continuous(labels=scales::percent) +
+  labs(y= "Count", x="Best model by condition\n(60/40_75/25_90/10)")  
+
+```
+
+### Cross-correlation of the relative model (1-state vs n-state) fit across the three sessions
+
+```{r}
+data<-read.csv(here::here("data", "model_fit_final_full.csv"))
+data<-data[data$study==3,]
+data<-assign_var_types(data, c("contingency", "ta", "study", "ids", "order"))  
+
+
+df2 <- data %>% 
+  dplyr::select(c("ids", "contingency", "m1m3_diff")) %>%
+  tidyr::pivot_wider(names_from = "contingency",
+                                    values_from = "m1m3_diff") 
+cdf <- stats::cor(df2[,c("60/40", "75/25", "90/10")], use = "pairwise.complete.obs", method="pearson" ) 
+g<-corrplot::corrplot(cdf, method='number')
+
+cor.test(df2$`60/40`, df2$`75/25`)
+cor.test(df2$`90/10`, df2$`75/25`)
+cor.test(df2$`90/10`, df2$`60/40`)
+
+
+```
+## Order of sessions 
+Session order was counterbalanced
+### Relative model fit and anxiety across sessionsby order
+```{r}
+data<-read.csv(here::here("data", "model_fit_final_full.csv"))
+data<-data[data$study==3,]
+data<-assign_var_types(data, c("contingency", "ta", "study", "ids", "order"))  
+
+
+pal <- get_colors("ond")
+## plot with anxiety 
+g <- ggplot(data = data, aes(y = m1m3_diff, x = ta_orig_scale, color=(m1m3_diff) )) +
+geom_point( size = 3, alpha = 0.9, show.legend = FALSE) +
+geom_smooth(method='lm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
+scale_color_gradient(low=pal[1], high=pal[1]) +
+theme_bw() +
+raincloud_theme +
+  stat_cor(method = "pearson",  alternative = "two.sided",  cor.coef.name = c("r"),  label.sep = ", ",  label.x.npc = "left",  label.y.npc = "top", digits = 3, r.digits = 3, p.digits = 3, aes(label = ..r.label..)) + 
+  labs(y= "Relative fit (more posiitve = n-state)", x="Trait anxiety")  + 
+  facet_grid(cols=vars(contingency), rows = vars(order_str))
+g
+
+ggsave(here::here("output/figures/session_order_TA_by_fit.pdf"), width = 7, height =5, dpi = 120)
+```
+
+
+### Impact of previous session 90/10 on state inference in 60/40 versus 60/40 being first
+```{r}
+data<-read.csv(here::here("data", "model_fit_final_full.csv"))
+data$contingency_short <- substr(data$contingency, 1, 2)
+data<-data[data$study==3,]
+data<-assign_var_types(data, c("contingency", "ta", "study", "ids", "order_first"))  
+
+df1 <- data[data$order_first=="60",]
+df1$cond <- "60/40_first"
+df2 <- data[data$order_second=="60" & data$order_first=="90", ]
+df2$cond <- "60/40_after_90/10"
+
+data <- rbind(df1, df2)
+
+g <- ggplot(aes(x=cond, y=m1m3_diff, fill=cond), data=data)+ 
+  geom_point(aes(y=m1m3_diff, fill=cond, color=cond), position = position_jitter(width = .15), size = 2, alpha = 0.5, show.legend = FALSE) +
+  geom_boxplot(width = 1.5, outlier.shape = NA, lwd=1.2,alpha = 0.7, show.legend = FALSE) +
+  scale_color_manual(values=c("maroon3", "yellow4", "dodgerblue4")) +
+  scale_fill_manual(values=rep(c("maroon3", "yellow4"),3), name="") +
+  theme_bw() +
+  raincloud_theme +
+
+    labs(y= "Relative fit (more posiitve = n-state)", x="") 
+g
+
+t.test(data = data, m1m3_diff ~ cond)
+
+ggsave(here::here("output/figures/60_40_by_preceeding_session.pdf"), width = 4, height = 5, dpi = 120)
+```
+
+### Control analysis: regressing out baseline from slope analysis
+```{r}
+dt<-read.csv(here::here("data", "slope_estimates.csv"))
+
+data<- read.csv(here::here("data/full_REV_data.csv"))
+
+# Only trials just before reversal
+data<-data[which(data$trno_onlypre %in% c(seq(-5, -1))),]
+data<-data[which(data$rev_type_4plot %in% c("acq", "ext")),]
+fields <- c("contingency", "ta", "study", "id", "rev_type_4plot", "half")
+df<- assign_var_types(data, fields)
+df$phase_str <- df$rev_type_4plot
+df = df %>%
+  group_by(id, study_str,contingency, half_str, phase_str, tabin , ta) %>%
+  summarise_at("prob", mean, na.rm = TRUE)
+df$baseline <- df$prob
+baseline_df <- df
+baseline_df$baseline <- baseline_df$prob
+
+
+sldata <- base::merge(dt, baseline_df, by=c("id", "contingency", "phase_str", "half_str"))
+sldata$ta <- sldata$ta.x
+#sldata = sldata %>%
+#  group_by(id, contingency, phase_str, ta) %>%
+#  summarise_at(c("baseline", "abscondval"), mean, na.rm = TRUE)
+
+
+#regress out individual / phase baseline effect
+mbl <- lm(data=sldata, abscondval ~ baseline + (1|phase_str/id) )
+sldata$slope_regout <- residuals(mbl)
+
+m<-lmer(data=sldata, slope_regout ~ ta*contingency + (1|phase_str/id)  )
+anova(m)
+
+joint_tests(m, by=c("contingency"))
+em = emmeans(m, specs = pairwise ~ contingency)
+em$emmeans
+em$contrasts
+
+emtr<-emtrends(m, pairwise ~ contingency, var = "ta")
+emtr
+
+sldata2 = sldata %>%
+  group_by(id, contingency) %>%
+  summarise_at(c("slope_regout", "ta"), mean, na.rm = TRUE)
+
+
+
+
+
+```
+

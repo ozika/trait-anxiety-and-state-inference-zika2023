@@ -27,7 +27,8 @@ dir.create(here::here("output/figures/"))
 
 ## Load packages
 ```{r}
-required_packages = c("ggplot2", "Jmisc", "sjmisc", "plyr", "lme4", "lmerTest", "emmeans", "tidyr", "dplyr", "ggpubr", "purrr", "broom", "PupillometryR", "plotrix", "VGAM", "reshape2")
+#library(PupillometryR)
+required_packages = c("PupillometryR","ggplot2", "Jmisc", "sjmisc", "plyr", "lme4", "lmerTest", "emmeans", "tidyr", "dplyr", "ggpubr", "purrr", "broom",  "plotrix", "VGAM", "reshape2")
 pacman::p_load(char = required_packages)
 source(here::here("utils/r_functions.R"))
 ```
@@ -37,6 +38,14 @@ source(here::here("utils/r_functions.R"))
 # load color palettes
 pal <- get_colors("ond2")
 pal2 <- get_colors("ond")
+pal3 <- get_colors("ukr")
+
+plot(NULL, xlim=c(0,length(pal2)), ylim=c(0,1), 
+    xlab="", ylab="", xaxt="n", yaxt="n")
+rect(0:(length(pal)-1), 0.7, 1:length(pal), 0.9, col=pal)
+rect(0:(length(pal2)-1), 0.4, 1:length(pal2), 0.6, col=pal2)
+rect(0:(length(pal3)-1), 0.1, 1:length(pal3), 0.3, col=pal3)
+
 ```
 
 ## 1. Analysis of ratings - stable cues
@@ -76,10 +85,12 @@ df2 <- stable_data %>%
     dplyr::mutate(tidied = map(tt, tidy)) %>% 
     unnest(tidied, .drop = T)
 
-df2$p.value.tukey = p.adjust(df2$p.value, method = "fdr")
+df2$p.value.fdr = p.adjust(df2$p.value, method = "fdr")
 
 df2
 
+## Gather model predictions and summarize for plots below 
+stable_data$model_pred <- predict(m1a) 
 
 ```
 
@@ -88,7 +99,7 @@ df2
 ```{r}
 stable_data_df = stable_data %>%
   group_by(id, trtype_str) %>%
-  summarise_at("prob", mean, na.rm = TRUE)
+  summarise_at(c("model_pred","prob"), mean, na.rm = TRUE)
 
 
 g <- ggplot(data = stable_data_df, aes(y = prob, x = trtype_str, fill = trtype_str)) +
@@ -98,6 +109,10 @@ geom_hline(yintercept = 0.25, color=pal[7], linetype="longdash")  +
 geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, lwd=1.2) +
 geom_point(aes(y = prob, color=trtype_str), position = position_jitter(width = .15), size = 2, alpha = 0.5, show.legend = FALSE) +
 geom_boxplot(width = .2, outlier.shape = NA, alpha = 0.7, lwd=1.2, show.legend = FALSE) +
+  
+
+stat_summary(geom="point", fun="mean", size=4, shape=23,  stroke=1.5, aes(y=model_pred, group=trtype_str), color="black", show.legend = FALSE) +
+
 expand_limits(x = 3) +
 
 scale_color_manual(values = c(pal[5], pal[7])) +
@@ -118,7 +133,7 @@ ggsave(here::here("output/figures/Fig_stable_1.pdf"), width = 6, height = 5, dpi
 ```{r}
 stable_data_df2 = stable_data  %>%
   group_by(id, trtype_str, contingency) %>%
-  summarise_at("prob", mean, na.rm = TRUE)
+  summarise_at(c("model_pred","prob"), mean, na.rm = TRUE)
 
 w <- 0.4
 g <- ggplot(data = stable_data_df2, aes(y = prob, x = contingency, fill = trtype_str))  
@@ -131,6 +146,9 @@ for (s in seq(3)) {
 g<- g+geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, show.legend = FALSE, lwd=1.2) +
 geom_point(aes(y = prob, colour=trtype_str), position = position_jitterdodge(  jitter.width = .15,  dodge.width = 0.2), size = 2, alpha = 0.8, show.legend = FALSE) +
 geom_boxplot(width = .2, outlier.shape = NA, alpha = 0.7,lwd=1.2, show.legend = FALSE) +
+stat_summary(geom="point", fun="mean", size=4, shape=23, aes(y=model_pred, group=trtype_str), color="black", 
+             position = position_dodge( 0.2), stroke=1.5, show.legend = FALSE) +
+  
 expand_limits(x = 3) +
 scale_color_manual(values = c(pal[5], pal[7])) +
 scale_fill_manual(values = c(pal[5], pal[7])) +  
@@ -146,7 +164,7 @@ ggsave(here::here("output/figures/Fig_stable_2.pdf"), width = 8, height = 5, dpi
 ```{r}
 stable_data_df3 = stable_data %>%
   group_by(id, trtype_str, tabin) %>%
-  summarise_at("prob", mean, na.rm = TRUE)
+  summarise_at(c("model_pred","prob"), mean, na.rm = TRUE)
 
 g <- ggplot(data = stable_data_df3, aes(y = prob, x = trtype_str, fill = interaction(tabin,trtype_str))) +
 geom_hline(yintercept = 0.75, color=pal[5], linetype="longdash")  +
@@ -155,6 +173,9 @@ geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, lwd=1.2) 
 
 geom_point(aes(color= interaction( tabin, trtype_str)), position =   position_jitterdodge(  jitter.width = .45,  dodge.width = 0.05), size = 2, alpha = 0.5, show.legend=FALSE) + 
 geom_boxplot(width = .2, outlier.shape = NA, alpha = 0.7, lwd=1.2, show.legend = FALSE) +  
+stat_summary(geom="point", fun="mean", size=4, shape=23, aes(y=model_pred, group=interaction(tabin,trtype_str)), color="black", 
+             position = position_dodge( 0.2), stroke=1.5, show.legend = FALSE) +  
+  
 expand_limits(x = 3) +
 scale_color_manual(values = c(pal[6], pal[5], pal[8], pal[7])) +
 scale_fill_manual(values = c(pal[6], pal[5], pal[8], pal[7]), name = "", labels = c("HC: Low Anxiety", "HC: High Anxiety", "LC: Low Anxiety", "LC: High Anxiety")) +
@@ -172,7 +193,7 @@ ggsave(here::here("output/figures/Fig_stable_3.pdf"), width = 7, height = 5, dpi
 ```{r}
 stable_data_df4 = stable_data %>%
   group_by(id, trtype_str, contingency, tabin) %>%
-  summarise_at("err", mean, na.rm = TRUE)
+  summarise_at(c("model_pred", "err"), mean, na.rm = TRUE)
 
 stable_data_df4 <- within(stable_data_df4, err[trtype_str=="hi-prob"] <- (err[trtype_str=="hi-prob"]))
 # https://stackoverflow.com/questions/16026215/generate-ggplot2-boxplot-with-different-colours-for-multiple-groups
@@ -181,6 +202,9 @@ geom_hline(yintercept=c(0), linetype="dashed") +
 geom_point(aes(color= interaction( tabin, trtype_str)), position =   position_jitterdodge(  jitter.width = .45,  dodge.width = 1), 
            size = 2, alpha = 0.5, show.legend=FALSE) + 
 geom_boxplot(inherit.aes = TRUE, width = 0.8, lwd=1.2, outlier.shape = NA, alpha = 0.7, show.legend = FALSE) +  
+stat_summary(geom="point", fun="mean", size=4, shape=23, aes(y=err, group=interaction(tabin,trtype_str)), color="black", 
+             position = position_dodge( 0.8), stroke=1.5, show.legend = FALSE) +
+  
 expand_limits(x = 3) +
 scale_color_manual(values = c(pal[6], pal[5], pal[8], pal[7])) +
 scale_fill_manual(values = c(pal[6], pal[5], pal[8], pal[7]), name = "", labels = c("HC: Low Anxiety", "HC: High Anxiety", "LC: Low Anxiety", "LC: High Anxiety")) +
@@ -216,6 +240,7 @@ em2a1$emmeans
 em2a1$contrasts
 
 # relationship with anxiety
+joint_tests(m2a, by = "phase_str")
 emtrends(m2a, pairwise ~ phase_str, var = "ta")
 
 # one-way t-tests against true reinforcement rates
@@ -226,8 +251,20 @@ df2 <- rev_data %>%
     mutate(tidied = map(tt, tidy)) %>% 
     unnest(tidied, .drop = T)
 df2$p.value.fdr = p.adjust(df2$p.value, method = "fdr")
+df2$sig <- 0 
+df2$sig[df2$p.value.fdr<0.05] <- 1
 df2
 
+# binarized anxiety to get means per group for descriptive tables (in supplementary)
+m2c <-lmer(prob ~ tabin*contingency*phase_str + (1|id)  + (1|study_str), rev_data) 
+em2c1 = emmeans(m2c, specs = pairwise ~ phase_str*tabin)
+em2c1$emmeans
+
+em2c2 = emmeans(m2c, specs = pairwise ~ phase_str*contingency*tabin)
+em2c2$emmeans
+
+em2c3 = emmeans(m2c, specs = pairwise ~ phase_str*contingency)
+em2c3$emmeans
 ```
 
 ### Plots
@@ -317,7 +354,11 @@ df_levs <- data.frame(contingency = c("60/40", "60/40", "75/25", "75/25", "90/10
 g <- ggplot(data = df, aes(y = prob, x = phase_str, fill = interaction( tabin, phase_str))) +
   geom_hline(data = df_levs[df_levs$phase_str == "acq",], aes(yintercept = level/100), color=pal[1], linetype="longdash", alpha =0.8) +
   geom_hline(data = df_levs[df_levs$phase_str == "ext",], aes(yintercept = level/100), color=pal[3], linetype="longdash", alpha =0.8) +
-geom_point(aes(color= interaction( tabin, phase_str)), position =   position_jitterdodge(  jitter.width = .45,  dodge.width = 1), size = 2, alpha = 0.5, show.legend=FALSE) + geom_boxplot(inherit.aes = TRUE, width = 0.8, lwd=1.2, outlier.shape = NA, alpha = 0.7) + 
+geom_point(aes(color= interaction( tabin, phase_str)), position =   position_jitterdodge(  jitter.width = .45,  dodge.width = 1), size = 2, alpha = 0.5, show.legend=FALSE) + 
+geom_boxplot(inherit.aes = TRUE, width = 0.8, lwd=1.2, outlier.shape = NA, alpha = 0.7) + 
+stat_summary(geom="point", fun="mean", size=4, shape=23, aes(group=interaction(tabin,phase_str)), color="black", 
+             position = position_dodge( 0.8), stroke=1.5, show.legend = FALSE) +  
+  
 expand_limits(x = 3) +
 scale_color_manual(values = c(pal[2], pal[1], pal[4], pal[3])) +
 scale_fill_manual(values = c(pal[2], pal[1], pal[4], pal[3]), name = "", labels = c("HS: Low Anxiety", "HS: High Anxiety", "LS: Low Anxiety", "LS: High Anxiety")) +
@@ -332,7 +373,7 @@ facet_grid(cols=vars(contingency)) +
   guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
 ylim(0,1)
 g
-
+ggsave(here::here("output/figures/Fig_reversal_3.pdf"), width = 10, height = 6, dpi = 120)
 
 ```
 
@@ -341,9 +382,10 @@ g
 #### Slopes by anxiety and state
 ```{r}
 rev_data <- read.csv(here::here("data/full_REV_data.csv"))
-# we'll be fitting the slopes to the first ten trials after reversal
-rev_data<-rev_data[which(rev_data$rev_trl %in% seq(10)),]
-rev_data = assign_var_types(rev_data, c("phase_str", "rev_trl", "study_str", "id", "contingency", "ta", "half_str"))
+
+# We'll be fitting the slopes to the first ten trials after reversal
+rev_data<-rev_data[which(rev_data$trno %in% seq(10)),]
+rev_data = assign_var_types(rev_data, c("phase_str", "trno", "study_str", "id", "contingency", "ta", "half_str"))
 
 
 # prepare data set
@@ -364,11 +406,11 @@ for (c in conts) {
   for (ph in phases) {
     for (h in halves)  {
       adata <- rev_data[which((rev_data$phase_str %in% ph) & (rev_data$contingency %in% c) & (rev_data$half_str %in% h)),]
-      mm = lmer(prob ~ 1 + (rev_trl|id) , adata) # This estimates slope for each participant
+      mm = lmer(prob ~ 1 + (trno|id) , adata) # This estimates slope for each participant
       rn_a<- data.frame(ranef(mm))
       rn_a["id"] <- rn_a$grp
       df_a<-data.frame()
-      df_a <- merge(df, rn_a[rn_a$term=="rev_trl",], by="id")
+      df_a <- merge(df, rn_a[rn_a$term=="trno",], by="id")
       df_a["phase"] <- ph
       df_a["contingency"] <- c
       df_a["half"] <- h
@@ -379,18 +421,46 @@ for (c in conts) {
 dt$phase_str = to_factor(dt$phase)
 dt$contingency = to_factor(dt$contingency)
 dt$half_str = to_factor(dt$half)
+dt$abscondval <- abs(dt$condval)
 
-# Test on slopes
-m3a<-lmer(condval ~ ta*contingency*phase_str + (1|grp) , dt)
+# Also save the slope estiamtes for other anlayses
+dt$slope <- dt$abscondval
+write.csv(dt, here::here("data", "slope_estimates.csv"))
+
+# Test on slopes (absolute slopes)
+dfst<-read.csv(here::here("data/model_fit_final_full.csv"))
+dfst<-dfst[,c("ids", "study", "contingency")]
+dfst<-assign_var_types(dfst, c( "study", "ids")) 
+dfst$id <- dfst$ids
+dfst<-dfst[,c("study_str", "id", "contingency")]
+dt <- base::merge(dt, dfst, by=c("id", "contingency"), all.x=TRUE)
+
+
+
+# Report mean slopes using non-absolute values
+m3b<-lmer(condval ~ ta*contingency*phase_str + (1|id) + (1|study_str), dt)
+em3b = emmeans(m3b, specs = pairwise ~ phase_str)
+em3b$emmeans
+
+# main statistical model
+m3a<-lmer(abscondval ~ ta*contingency*phase_str + (1|id) + (1|study_str), dt)
 anova(m3a)
 
-# Post-hocs
-em3a = emmeans(m3a, specs = pairwise ~ phase_str*contingency)
+# m3a<-lmer(condval ~ ta*contingency*phase_str + (1|grp) , dt)
+# anova(m3a)
+# 
+# # Post-hocs
+em3a = emmeans(m3a, specs = pairwise ~ contingency)
 em3a$emmeans
 em3a$contrasts
 
-# Interactions with trait anxiety
-emtrends(m3a, pairwise ~ phase_str:contingency, var = "ta")
+joint_tests(m3a, by = "contingency")
+
+# 
+# # Interactions with trait anxiety
+emtrends(m3a, pairwise ~ contingency, var = "ta")
+
+
 ```
 
 #### slope and relative model fit
@@ -402,6 +472,9 @@ dt$slope <- abs(dt$condval)
 dt2 = dt %>%
   group_by(id, contingency) %>%
   summarise_at(c("slope"), mean, na.rm = TRUE)
+
+write.csv(dt2, here::here("../output", "tables_and_csvs", "est_slopes_1-10.csv"), row.names = FALSE)
+
 df <- join(x=as.data.frame(dt2[,c("contingency", "slope", "id")]), y=as.data.frame(fit_data[, c("contingency", "id", "m1m3_diff", "ta")]), by=c("contingency", "id"))
 
 ### correlation between slope and relative model fit
@@ -413,19 +486,68 @@ cor.test(df$slope, df$m1m3_diff)
 
 ```
 
+#### TODELETE: slope and relative model fit - regressing out baseline
+```{r}
+fit_data <- read.csv(here::here("data/model_fit_final_full.csv"))
+fit_data = assign_var_types(fit_data, c("contingency", "ta", "study", "ids"))
+fit_data$id <- fit_data$ids
+dt$slope <- abs(dt$condval)
+
+#### get baseline and regress it out
+sdf<-read.csv(here::here("../output/full_behavioural_dataset_study_pX_real_data.csv"))
+# Only reversal cue
+sdf<-sdf[which(sdf$Trial_Type %in% 3),]
+# Only trials just before reversal
+sdf<-sdf[which(sdf$trno_onlypre %in% c(seq(-5, -1))),]
+sdf<-sdf[which(sdf$rev_type_4plot %in% c("acq", "ext")),]
+fields <- c("contingency","id", "rev_type_4plot")
+sdf<- assign_var_types(sdf, fields)
+sdf$phase_str <- sdf$rev_type_4plot
+sdf = sdf %>%
+  group_by(id, study_str,contingency, phase_str) %>%
+  summarise_at("prob", mean, na.rm = TRUE)
+sdf$baseline <- sdf$prob
+baseline_df <- sdf
+baseline_df$baseline <- baseline_df$prob
+
+dtt <- base::merge(dt, baseline_df[,c("baseline", "id", "contingency", "phase_str")], by=c("id", "contingency", "phase_str"))
+
+
+m<- lmer(data = dtt, slope ~ baseline + (1|phase_str/id) )
+dtt$slope_regout <- resid(m)
+
+dt2 = dtt %>%
+  group_by(id, contingency) %>%
+  summarise_at(c("slope_regout"), mean, na.rm = TRUE)
+
+
+
+df <- join(x=as.data.frame(dt2[,c("contingency", "slope_regout", "id")]), y=as.data.frame(fit_data[, c("contingency", "id", "m1m3_diff", "ta")]), by=c("contingency", "id"))
+
+
+### correlation between slope and relative model fit
+df = df %>%
+  group_by(id ) %>%
+  summarise_at(c("slope_regout", "m1m3_diff"), mean, na.rm = TRUE)
+df<- as.data.frame(df)
+cor.test(df$slope_regout, df$m1m3_diff)
+
+```
+
 ### Plots
 #### Slopes by anxiety and state
 ```{r}
-dt2 = dt %>%
-  group_by(id, contingency, phase_str) %>%
-  summarise_at(c("condval"), mean, na.rm = TRUE)
-write.csv(dt2, here::here("data/est_slopes_1-10.csv"), row.names = FALSE)
+
 
 
 g <- ggplot(data = dt, aes(y = condval, x = phase, fill = interaction(tabin, phase_str))) +
 geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .7,lwd=1.2) +
 geom_point(aes(color= interaction( tabin, phase_str)), position = position_jitterdodge(  jitter.width = .15,  dodge.width = 0.2), size = 2, alpha = 0.5, show.legend=FALSE) + geom_boxplot(width = .2, outlier.shape = NA, alpha = 0.7, lwd=1.2, show.legend = FALSE) +
 geom_hline(yintercept=c(0), linetype="dashed") +
+stat_summary(geom="point", fun="mean", size=3, shape=23, aes(group=interaction(tabin,phase_str)), color="black", 
+             position = position_dodge( 0.2), stroke=1, show.legend = FALSE) +    
+  
+  
 expand_limits(x = 3) +
 scale_color_manual(values = c(pal[2], pal[1], pal[4], pal[3])) +
 scale_fill_manual(values = c(pal[2], pal[1], pal[4], pal[3]), name = "Trait anxiety", labels = c("Low", "High")) +
@@ -454,8 +576,8 @@ dt2 = dt %>%
 df <- join(x=as.data.frame(dt2[,c("contingency", "slope", "id")]), y=as.data.frame(fit_data[, c("contingency", "id", "m1m3_diff", "ta_orig_scale")]), by=c("contingency", "id"))
 
 df<-df[df$contingency %in% "90/10",]
-g <- ggplot(data = df, aes(x = ta_orig_scale, y = slope, color=(slope) ), show.legend = FALSE) +
-geom_point( size = 3, alpha = 0.9, show.legend = FALSE) +
+g <- ggplot(data = df, aes(x = ta_orig_scale, y = slope ), show.legend = FALSE) +
+geom_point( ) +
 geom_smooth(method='lm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
 scale_color_gradient(low=pal[9], high=pal[9]) +
 theme_bw() +
@@ -487,6 +609,8 @@ g <- ggplot(aes(x=cont, y=log_steepness, fill=cont), data=stsw_data) +
   geom_flat_violin(position = position_nudge(x = .2, y = 0), lwd=1.2, alpha = .8, show.legend = FALSE) +
   geom_point(aes(y = log_steepness, color=cont), position = position_jitter(width = .15), size = 2, alpha = 0.5, show.legend = FALSE) +
   geom_boxplot(width = .2, outlier.shape = NA, lwd=1.2,alpha = 0.7, show.legend = FALSE) + 
+  stat_summary(geom="point", fun="mean", size=5, shape=23, aes(group=cont), color="black", 
+             position = position_dodge( 0), stroke=1, show.legend = FALSE) + 
   expand_limits(x = 3) +
   scale_color_manual(values=c(col, col, col)) +
   scale_fill_manual(values=c(col, col, col)) +
@@ -504,6 +628,8 @@ g <- ggplot(aes(x=cont, y=switchpoint, fill=cont), data=stsw_data) +
   geom_flat_violin(position = position_nudge(x = .2, y = 0), lwd=1.2, alpha = .8, show.legend = FALSE) +
   geom_point(aes(y = switchpoint, color=cont), position = position_jitter(width = .15), size = 2, alpha = 0.5, show.legend = FALSE) +
   geom_boxplot(width = .2, outlier.shape = NA, lwd=1.2, alpha = 0.7, show.legend = FALSE) +
+  stat_summary(geom="point", fun="mean", size=5, shape=23, aes(group=cont), color="black", 
+             position = position_dodge( 0), stroke=1, show.legend = FALSE) + 
   
   expand_limits(x = 3) +
   scale_color_manual(values=c(col, col, col)) +
@@ -583,14 +709,51 @@ stat_cor(method = "pearson",  alternative = "two.sided",  cor.coef.name = c("r")
 raincloud_theme +
 labs(y= "Trait anxiety", x="Relative fit") 
 g
-ggsave(here::here("output/figures/Fig_model_fit_and_anxiety.pdf"), width = 5, height = 4, dpi = 120)
+ggsave(here::here("output/figures/Fig_model_fit_and_anxiety.pdf"), width = 7, height = 4.5, dpi = 120)
 ```
+## 4b. Analysis of winning model parameters
+### N-state
+```{r}
+data <- read.csv(here::here("data/models_no_states_and_switches_data.csv"))
+ vars <- c("contingency", "ta", "study",  "ids")
+ data <- assign_var_types(data, vars)
+ df <- data %>% 
+      melt(id.vars = c("ids", "ta", "study_str", "contingency"), measure.vars = c("tau_sh_reversalbsim", "tau_nosh_reversalbsim"), value.name = "tau", variable.name = "outcome" )
+  df$outcome <- mapvalues(df$outcome,
+                              from = c("tau_sh_reversalbsim", "tau_nosh_reversalbsim"),
+                              to =c("sh", "nosh"))
+  
+  m <- lmer(data=df, tau ~ contingency*outcome*ta + (1|ids) + (1|study_str) )
+ anova(m)
+ memm <- emmeans(m, specs = pairwise ~ outcome)
+ memm$emmeans
+```
+### 1-state
+```{r}
+data <- read.csv(here::here("data/models_no_states_and_switches_data.csv"))
+vars <- c("contingency", "ta", "study",  "ids")
+ data <- assign_var_types(data, vars)
+ df <- data %>% 
+      melt(id.vars = c("ids", "ta", "study_str", "contingency"), measure.vars = c("tau_sh_reversallbetav5", "tau_nosh_reversallbetav5"), value.name = "tau", variable.name = "outcome" )
+  df$outcome <- mapvalues(df$outcome,
+                              from = c("tau_sh_reversalbssm", "tau_nosh_reversalbssm"),
+                              to =c("sh", "nosh"))
+  
+  m <- lmer(data=df, tau ~ contingency*outcome*ta + (1|ids) + (1|study_str) )
+ anova(m)
+ memm <- emmeans(m, specs = pairwise ~ outcome)
+ memm$emmeans
+ 
+ memm <- emmeans(m, specs = pairwise ~ outcome*contingency)
+ memm$emmeans
+```
+
 ## 5. Analysis of model-free learning rates from oddball and meaningful events
 ### Stats
 #### Oddball/meaninful by anx and outcome
 ```{r}
 # Load calcualted model-free learning rates
-mflr_data <- read.csv(here::here("data/oddball_data.csv"))
+mflr_data <- read.csv(here::here("data/oddball_data_n5.csv"))
 mflr_data = assign_var_types(mflr_data, c("study", "lrtype", "ta","contingency", "ids" ))
 df <- melt(mflr_data, measure.vars=c("mflr_sh","mflr_nosh"),
     value.name = "mflr", variable.name="outcome_str")
@@ -616,24 +779,87 @@ emtrends(m5a, pairwise ~ lrtype, var = "ta")
 odd_model_data <- read.csv(here::here("data/oddball_by_model.csv"))
 odd_model_data$best_model <- as.factor(odd_model_data$best_model)
 t.test(mflr_diff~best_model, alternative = "two.sided", var.equal = FALSE, data=odd_model_data)
+
+odd_model_data %>%
+  group_by(best_model) %>%
+  summarise_at(c("mflr_diff"), mean, na.rm = TRUE)
+
+
+
+
 ```
 
 ### Plots
 #### Oddball/Meaninful by anxiety
+```{r fig.width=4, fig.height=5}
+
+df2 <- df %>%
+  group_by(tabin, lrtype, ids, ta_orig_scale) %>%
+  summarise_at(c("mflr"), mean, na.rm = TRUE)
+
+dfnew <- df2 %>% tidyr::pivot_wider(
+                  id_cols=c("ids", , "tabin", "ta_orig_scale"),
+                  names_from=lrtype,
+                  values_from=mflr 
+                  ) 
+dfnew$mflr_diff <- dfnew$common - dfnew$odd
+
+
+g <- ggplot(data = dfnew, aes(y = mflr_diff, x = tabin, fill = tabin)) +
+geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, lwd=1.2, show.legend = TRUE) +
+geom_point(aes(color= tabin), position =   position_jitterdodge(  jitter.width = .15,  dodge.width = 0.25), size = 2, alpha = 0.5, show.legend=FALSE) + 
+geom_boxplot(width = .25, outlier.shape = NA, alpha = 0.7, lwd=1.2, show.legend = FALSE) +
+stat_summary(geom="point", fun="mean", size=5, shape=23, aes(group=tabin), color="black", 
+             position = position_dodge( 0.25), stroke=1, show.legend = FALSE) + 
+expand_limits(x = 3) +
+scale_color_manual(values = pal[c(2,1,2,4)] , name = "", labels = c("Low Anx", "High Anx")) +
+scale_fill_manual(values = pal[c(2,1,2,4)], name = "", labels = c("Low Anx", "High Anx")) + 
+theme_bw() +
+raincloud_theme +
+  theme(strip.text.x = element_text(size = 14,  face = "bold"),
+      strip.background = element_rect(color="black", fill="#ebebeb", size=0, linetype="solid")) +
+theme(legend.position = "top") + 
+labs(y= "Meaningful-oddball learning difference", x="Trait anxiety") +
+  scale_x_discrete(labels=c("Low", "High")) +
+guides(fill=guide_legend(nrow=4,byrow=TRUE)) + 
+  ylim(-0.1, 0.35)
+g
+ggsave(here::here("output/figures/Fig_oddball_anxiety.pdf"), width = 4, height = 5, dpi = 120)
+```
+#### Also plot continously
+```{r fig.width=6, fig.height=5}
+
+g <- ggplot(data = dfnew, aes(x = ta_orig_scale, y = mflr_diff, color=ta_orig_scale ), show.legend = FALSE) +
+geom_point(size=3 ) +
+geom_smooth(method='lm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
+scale_color_gradient2(low=pal2[14], high=pal2[15], midpoint = 40, mid = pal2[13]) +
+  #scale_color_gradient2(low=pal2[15], midpoint = 0, mid = "grey39", high=pal2[16]) +
+theme_bw() +
+raincloud_theme +
+  stat_cor(method = "spearman",  alternative = "two.sided",  cor.coef.name = c("r"),  label.sep = ", ",  label.x.npc = "left",  label.y.npc = "top", digits = 3, r.digits = 3, p.digits = 3) + 
+  
+  labs(x= "Trait anxiety", y="Meaningful-oddball learning difference")   
+g
+
+ggsave(here::here("output/figures/Fig_oddball_anxiety_continuous.pdf"), width = 6.5, height = 5, dpi = 120)
+```
+
 ```{r}
 df2 <- df %>%
   group_by(contingency, tabin, lrtype, ids) %>%
   summarise_at(c("mflr"), mean, na.rm = TRUE)
 
-pal <- get_colors("ukr")
+
 
 g <- ggplot(data = df2, aes(y = mflr, x = tabin, fill = interaction(tabin, lrtype))) +
 geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, lwd=1.2, show.legend = TRUE) +
 geom_point(aes(color= interaction( tabin, lrtype)), position =   position_jitterdodge(  jitter.width = .15,  dodge.width = 0.25), size = 2, alpha = 0.5, show.legend=FALSE) + 
 geom_boxplot(width = .2, outlier.shape = NA, alpha = 0.7, lwd=1.2, show.legend = FALSE) +
+stat_summary(geom="point", fun="mean", size=5, shape=23, aes(group= interaction(tabin, lrtype)), color="black", 
+             position = position_dodge( 0.25), stroke=1, show.legend = FALSE) + 
 expand_limits(x = 3) +
-scale_color_manual(values = pal[c(1,3,2,4)] ) +
-scale_fill_manual(values = pal[c(1,3,2,4)]) + 
+scale_color_manual(values = pal[c(2,4,1,3,2,4)] ) +
+scale_fill_manual(values = pal[c(2,4,1,3,2,4)]) + 
 theme_bw() +
 raincloud_theme +
 theme(legend.position = "right") + 
@@ -644,26 +870,51 @@ g
 ```
 
 #### Oddball/Meaninful by best fitted model
-```{r}
+```{r fig.width=4, fig.height=5}
+## Plot the difference as well
 g <- ggplot(data = odd_model_data, aes(y = mflr_diff, x = best_model, fill =  best_model)) +
 geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, lwd=1.2) +
 geom_point(aes(color= best_model), position =   position_jitterdodge(  jitter.width = .45,  dodge.width = 1), size = 2, alpha = 0.5, show.legend=FALSE) +  
 geom_boxplot(inherit.aes = TRUE, width = 0.25, lwd=1.2, outlier.shape = NA, alpha = 0.7, show.legend = FALSE) + 
-
+stat_summary(geom="point", fun="mean", size=5, shape=23, aes(group=best_model), color="black", 
+             position = position_dodge( 1), stroke=1, show.legend = FALSE) + 
 expand_limits(x = 3) +
-scale_color_manual(values = c(pal[1], pal[3], pal[4], pal[3])) +
-scale_fill_manual(values = c(pal[1], pal[3], pal[4], pal[3]), name = "", labels = c("1-state", "n-state")) +
+scale_color_manual(values = c(pal2[15], pal2[16], pal[4], pal[3])) +
+scale_fill_manual(values = c(pal2[15], pal2[16], pal[4], pal[3]), name = "", labels = c("1-state", "n-state")) +
 theme_bw() +
 raincloud_theme +
 theme(strip.text.x = element_text(size = 14,  face = "bold"),
       strip.background = element_rect(color="black", fill="#ebebeb", size=0, linetype="solid")) +
 theme(legend.position = "top") +  #c(0.8, 0.2)
 
-labs(y= "meaningful-oddball", x="model")  +
+labs(y= "Meaningful-oddball learning difference", x="Best model")  +
 
-  guides(fill=guide_legend(nrow=1,byrow=TRUE)) 
+  guides(fill=guide_legend(nrow=1,byrow=TRUE)) +
+ylim(-0.1, 0.35)
 g
-```
 
+ggsave(here::here("output/figures/Fig_oddball_model.pdf"), width = 4, height = 5, dpi = 120)
+```
+```{r}
+g <- ggplot(data = odd_model_data, aes(x = m1m3_diff, y = mflr_diff, color=m1m3_diff ), show.legend = FALSE) +
+geom_point(size=3 ) +
+geom_smooth(method='lm', formula= y~x, alpha=0.3, show.legend = FALSE, color="black") +
+scale_color_gradient2(low=pal[3], high=pal[4], midpoint = -5, mid = pal[3]) +
+  #scale_color_gradient2(low=pal2[15], midpoint = 0, mid = "grey39", high=pal2[16]) +
+theme_bw() +
+raincloud_theme +
+  stat_cor(method = "kendall",  alternative = "two.sided",  cor.coef.name = c("r"),  label.sep = ", ",  label.x.npc = "left",  label.y.npc = "top", digits = 3, r.digits = 3, p.digits = 3) + 
+  labs(x= "Model difference", y="Meaningful-oddball learning difference")   
+g
+
+ggsave(here::here("output/figures/Fig_oddball_model_continuous.pdf"), width = 6.5, height = 5, dpi = 120)
+
+```
+## 5 Additional figures and analyses
+### Percentage participants by model 
+
+```{r}
+
+```
 
 

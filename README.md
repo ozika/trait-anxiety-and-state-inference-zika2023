@@ -30,7 +30,7 @@ R versions: `3.6.0 (2019-04-26)`, `4.0.0 (2020-04-24)`, `4.1.2 (2021-11-01)`
 git clone  git@github.com:ozika/state-inference-models-zika2022.git
 ```
 
-2. In RStudio open `scripts/stats_main.Rmd`
+2. In RStudio open `scripts/stats_main.Rmd` (or `stats_supp.Rmd`)
 3. Run. The script should load the `renv.lock` file and use it to download and install all necessary packages.
 4. To check that all worked, the script should create a `output/figures/` folder and print the paper figures into it.
 
