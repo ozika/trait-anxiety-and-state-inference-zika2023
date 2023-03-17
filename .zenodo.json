@@ -9,17 +9,17 @@
             "orcid": "0000-0002-5062-1046",
             "affiliation": "Wellcome Center for Integrative Neuroimaging (WIN),Nuffield Department of Clinical Neurosciences,University of Oxford, Oxford, UK",
             "name": "Wiech, Katja"
-        }
+        },
         {
             "orcid": "0000-0001-5130-7318",
             "affiliation": "Department of Psychiatry, University of Oxford, Oxford, UK",
             "name": "Reinecke, Andrea"
-        }
+        },
         {
             "orcid": "0000-0001-9108-3144",
             "affiliation": "Department of Psychiatry, University of Oxford, Oxford, UK",
             "name": "Browning, Michael"
-        }
+        },
         {
             "orcid": "0000-0002-0150-8776",
             "affiliation": "Institute of Psychology, Universität Hamburg, Von-Melle-Park 5, 20254 Hamburg, Germany",
@@ -40,6 +40,6 @@
         }
     ],
 
-    "keywords": ["Anxiety", "Computational Psychiatry", "Learning", "Trait anxiety", "Reinforcement learning", "Fear learning", "Aversive learning"],
+    "keywords": ["Anxiety", "Computational Psychiatry", "Learning", "Trait anxiety", "Reinforcement learning", "Fear learning", "Aversive learning"]
 
 }
