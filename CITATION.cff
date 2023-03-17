@@ -10,7 +10,7 @@ authors:
     given-names: "Katja"
     orcid: "https://orcid.org/0000-0002-5062-1046"
     affiliation: "Wellcome Center for Integrative Neuroimaging (WIN), Nuffield Department of Clinical Neurosciences, University of Oxford, Oxford, UK"
-title: "My Research Software"
-version: 2.0.4
-doi: 10.5281/zenodo.1234
-date-released: 2021-08-11
+title: "Trait anxiety and state inference - Nature Communications release"
+version: v1.1.0
+date-released: 2023-03-17
+url: https://github.com/ozika/trait-anxiety-and-state-inference-zika2023
