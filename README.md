@@ -1,8 +1,8 @@
 # Description
 
-This repo is associated with the following preprint:
+This repo is associated with the following paper:
 
-> *Trait anxiety is associated with hidden state inference during aversive reversal learning* (2022). O Zika, K Wiech, A Reinecke, M Browning, NW Schuck - bioRxiv, https://doi.org/10.1101/2022.04.01.483303
+> *Trait anxiety is associated with hidden state inference during aversive reversal learning* (2023). O Zika, K Wiech, A Reinecke, M Browning, NW Schuck - Nature Communications, https://doi.org/10.1101/2022.04.01.483303
 
 It contains **data** and **scripts** to reproduce the results in the main text.
 
