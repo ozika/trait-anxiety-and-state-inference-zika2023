@@ -1,0 +1,45 @@
+{
+    "creators": [
+        {
+            "orcid": "0000-0003-0483-4443",
+            "affiliation": "Max Planck Institute for Human Development, Berlin, Germany",
+            "name": "Zika, Ondrej"
+        },
+        {
+            "orcid": "0000-0002-5062-1046",
+            "affiliation": "Wellcome Center for Integrative Neuroimaging (WIN),Nuffield Department of Clinical Neurosciences,University of Oxford, Oxford, UK",
+            "name": "Wiech, Katja"
+        }
+        {
+            "orcid": "0000-0001-5130-7318",
+            "affiliation": "Department of Psychiatry, University of Oxford, Oxford, UK",
+            "name": "Reinecke, Andrea"
+        }
+        {
+            "orcid": "0000-0001-9108-3144",
+            "affiliation": "Department of Psychiatry, University of Oxford, Oxford, UK",
+            "name": "Browning, Michael"
+        }
+        {
+            "orcid": "0000-0002-0150-8776",
+            "affiliation": "Institute of Psychology, Universität Hamburg, Von-Melle-Park 5, 20254 Hamburg, Germany",
+            "name": "Schuck, Nicolas"
+        }
+    ],
+
+    "license": ["GNU GPLv3", "CC BY-NC 4.0"],
+
+    "title": "Trait anxiety is associated with hidden state inference during aversive reversal learning",
+
+    "related_identifiers": [
+        {
+            "scheme": "doi",
+            "identifier": "https://doi.org/10.1101/2022.04.01.483303",
+            "relation": "",
+            "resource_type": "publication-preprint"
+        }
+    ],
+
+    "keywords": ["Anxiety", "Computational Psychiatry", "Learning", "Trait anxiety", "Reinforcement learning", "Fear learning", "Aversive learning"],
+
+}
