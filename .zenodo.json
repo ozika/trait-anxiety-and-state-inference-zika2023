@@ -27,7 +27,7 @@
         }
     ],
 
-    "license": ["GNU GPLv3", "CC BY-NC 4.0"],
+    "license": "CC BY-NC 4.0",
 
     "title": "Trait anxiety is associated with hidden state inference during aversive reversal learning",
 
