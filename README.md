@@ -1,6 +1,9 @@
 # Citation
 Please cite this code and data. 
 
+<a href="https://doi.org/10.5281/zenodo.7746122"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.7746122.svg" alt="DOI"></a>
+
+
 ```
 Zika, Ondrej, Wiech, Katja, Reinecke, Andrea, Browning, Michael, & Schuck, Nicolas. (2023). Trait anxiety is associated with hidden state inference during aversive reversal learning (v1.8.0). Zenodo. https://doi.org/10.5281/zenodo.7746122
 ```
