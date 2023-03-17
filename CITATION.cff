@@ -6,6 +6,10 @@ authors:
     orcid: https://orcid.org/0000-0003-0483-4443
     affiliation: "Max Planck Institute for Human Development, Berlin, Germany"
     website: "www.ondrejzika.cz"
+  - family-names: "Wiech"
+    given-names: "Katja"
+    orcid: "https://orcid.org/0000-0002-5062-1046"
+    affiliation: "Wellcome Center for Integrative Neuroimaging (WIN), Nuffield Department of Clinical Neurosciences, University of Oxford, Oxford, UK"
 title: "My Research Software"
 version: 2.0.4
 doi: 10.5281/zenodo.1234
